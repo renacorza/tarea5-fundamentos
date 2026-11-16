@@ -1,0 +1,387 @@
+--------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  C:\Users\rato2\OneDrive\Documentos\Programación\tareas\tarea5-funda
+> mentos\output/tarea_t5.log
+  log type:  text
+ opened on:  15 Nov 2026, 23:28:10
+
+. 
+. * --- Parámetros (lo único que se edita) ---
+. local datos "data/raw/casen_reducido.csv"
+
+. local depvar "ingreso"
+
+. local numericas "ingreso educ edad experiencia"
+
+. local controles "educ experiencia"
+
+. local grupos "sector region genero"
+
+. global umbral = 500000
+
+. global fuente "Elaboración propia en base a CASEN"
+
+. 
+. * Los locales son relacionados al ejercicio y no se traspasan si se está traba
+> jando
+. * en un do-file diferente simultáneamente. Los globales se pueden conservar du
+> rante
+. * toda la sesión y entre distintos do-files.
+. 
+. import delimited "`datos'", clear varnames(1) encoding("utf-8")
+(6 vars, 60 obs)
+
+. generate experiencia = max(edad - educ - 6, 0)
+
+. 
+. generate mujer = genero == "F"
+
+. label define sino 0 "Hombre" 1 "Mujer"
+
+. label values mujer sino
+
+. 
+. foreach v of local numericas {
+  2. summarize `v', detail
+  3. }
+
+                           ingreso
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%       180000         180000
+ 5%       276000         226000
+10%       384000         276000       Obs                  55
+25%       497000         363000       Sum of wgt.          55
+
+50%       672000                      Mean           655290.9
+                        Largest       Std. dev.      209912.4
+75%       807000         959000
+90%       948000         975000       Variance       4.41e+10
+95%       975000         987000       Skewness      -.1743242
+99%      1093000        1093000       Kurtosis       2.407897
+
+                            educ
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            6              6
+ 5%            7              7
+10%            9              7       Obs                  60
+25%         10.5              7       Sum of wgt.          60
+
+50%         12.5                      Mean           12.73333
+                        Largest       Std. dev.      3.328697
+75%           15             18
+90%           17             19       Variance       11.08023
+95%         18.5             20       Skewness       .1798646
+99%           20             20       Kurtosis       2.493514
+
+                            edad
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%           20             20
+ 5%         21.5             20
+10%         22.5             21       Obs                  60
+25%           32             22       Sum of wgt.          60
+
+50%         45.5                      Mean           44.51667
+                        Largest       Std. dev.      15.15959
+75%         57.5             68
+90%           64             69       Variance       229.8133
+95%         68.5             69       Skewness      -.0681735
+99%           70             70       Kurtosis       1.791894
+
+                         experiencia
+-------------------------------------------------------------
+      Percentiles      Smallest
+ 1%            0              0
+ 5%            3              2
+10%            5              2       Obs                  60
+25%         10.5              4       Sum of wgt.          60
+
+50%           27                      Mean           25.78333
+                        Largest       Std. dev.       15.3182
+75%           36             48
+90%           47             50       Variance       234.6472
+95%           49             52       Skewness      -.0345026
+99%           53             53       Kurtosis       1.783916
+
+. 
+. forvalues t = 0(9)45 {
+  2. quietly count if experiencia >= `t' & experiencia < `t' + 9
+  3. display "Experiencia laboral de `t' a " `t' + 8 " años: " r(N) " personas"
+  4. }
+Experiencia laboral de 0 a 8 años: 12 personas
+Experiencia laboral de 9 a 17 años: 9 personas
+Experiencia laboral de 18 a 26 años: 8 personas
+Experiencia laboral de 27 a 35 años: 13 personas
+Experiencia laboral de 36 a 44 años: 10 personas
+Experiencia laboral de 45 a 53 años: 8 personas
+
+. 
+. capture program drop descriptivos_grupo
+
+. program define descriptivos_grupo
+  1. display _newline "=== Descriptivos por `1' ==="
+  2. tabulate `1'
+  3. tabstat ingreso educ, by(`1') statistics(mean sd n)
+  4. end
+
+. 
+. foreach g of local grupos {
+  2. descriptivos_grupo `g'
+  3. }
+
+=== Descriptivos por sector ===
+
+       sector |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+  Agricultura |         13       21.67       21.67
+     Comercio |          6       10.00       31.67
+ Construcción |          5        8.33       40.00
+    Educación |          8       13.33       53.33
+    Industria |         11       18.33       71.67
+    Servicios |         17       28.33      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: sector 
+
+       sector |   ingreso      educ
+--------------+--------------------
+  Agricultura |  447846.2  12.30769
+              |  156716.2  3.473342
+              |        13        13
+--------------+--------------------
+     Comercio |  523833.3  11.33333
+              |  135666.4  4.546061
+              |         6         6
+--------------+--------------------
+ Construcción |    520800        10
+              |  115694.4  3.391165
+              |         5         5
+--------------+--------------------
+    Educación |  908857.1     16.25
+              |  117920.1  2.434866
+              |         7         8
+--------------+--------------------
+    Industria |  697888.9  13.27273
+              |  154652.4  2.412091
+              |         9        11
+--------------+--------------------
+    Servicios |    788600  12.35294
+              |  112702.4  2.548067
+              |        15        17
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por region ===
+
+       region |      Freq.     Percent        Cum.
+--------------+-----------------------------------
+    Araucanía |         11       18.33       18.33
+       Biobío |         10       16.67       35.00
+        Maule |         12       20.00       55.00
+Metropolitana |         12       20.00       75.00
+        Ñuble |         15       25.00      100.00
+--------------+-----------------------------------
+        Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: region 
+
+       region |   ingreso      educ
+--------------+--------------------
+    Araucanía |    638600  12.27273
+              |  238927.8   4.07654
+              |        10        11
+--------------+--------------------
+       Biobío |    633200      12.3
+              |  190041.4  2.110819
+              |        10        10
+--------------+--------------------
+        Maule |  659272.7  13.33333
+              |  217151.6  3.284491
+              |        11        12
+--------------+--------------------
+Metropolitana |  637636.4  12.91667
+              |  196989.5  3.315483
+              |        11        12
+--------------+--------------------
+        Ñuble |  696692.3  12.73333
+              |  232279.4  3.769552
+              |        13        15
+--------------+--------------------
+        Total |  655290.9  12.73333
+              |  209912.4  3.328697
+              |        55        60
+-----------------------------------
+
+=== Descriptivos por genero ===
+
+     genero |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          F |         29       48.33       48.33
+          M |         31       51.67      100.00
+------------+-----------------------------------
+      Total |         60      100.00
+
+Summary statistics: Mean, SD, N
+Group variable: genero 
+
+genero |   ingreso      educ
+-------+--------------------
+     F |  636296.3  12.96552
+       |  224593.3  3.458765
+       |        27        29
+-------+--------------------
+     M |  673607.1  12.51613
+       |  197088.3  3.244184
+       |        28        31
+-------+--------------------
+ Total |  655290.9  12.73333
+       |  209912.4  3.328697
+       |        55        60
+----------------------------
+
+. 
+. tempvar ing_miles
+
+. generate `ing_miles' = ingreso / 1000
+(5 missing values generated)
+
+. summarize `ing_miles'
+
+    Variable |        Obs        Mean    Std. dev.       Min        Max
+-------------+---------------------------------------------------------
+    __000000 |         55    655.2909    209.9124        180       1093
+
+. 
+. * Con tempvar se crea un nombre que se borra al terminar de correr, así la bas
+> e
+. * de datos no se llena de variables que se usan una vez y después habría que
+. * borrar.
+. 
+. count if ingreso > $umbral & !missing(ingreso)
+  41
+
+. 
+. * Los valores perdidos en STATA se consideran mayores a cualquier número, por
+. * lo que hay que excluirlos específicamente usando !missing cuando hay una
+. * consición de mayor que.
+. 
+. quietly regress `depvar' `controles'
+
+. estimates store m1
+
+. quietly regress `depvar' `controles' i.mujer
+
+. estimates store m2
+
+. estimates table m1 m2, b(%9.0f) se stats(N r2) stfmt(%5.3f)
+
+--------------------------------------
+    Variable |    m1          m2      
+-------------+------------------------
+        educ |     42019       42246  
+             |      6393        6355  
+ experiencia |      -115        -517  
+             |      1415        1440  
+             |
+       mujer |
+      Mujer  |                -55686  
+             |                 43302  
+             |
+       _cons |    124160      158713  
+             |     94837       98002  
+-------------+------------------------
+           N |        55          55  
+          r2 |     0.458       0.475  
+--------------------------------------
+                          Legend: b/se
+
+. 
+. estimates restore m1
+(results m1 are active now)
+
+. display "Beta educ m1: " _b[educ]
+Beta educ m1: 42018.996
+
+. estimates restore m2
+(results m2 are active now)
+
+. display "Beta educ m2: " _b[educ]
+Beta educ m2: 42245.764
+
+. 
+. levelsof sector, local(sectores)
+`"Agricultura"' `"Comercio"' `"Construcción"' `"Educación"' `"Industria"' `"Serv
+> icios"'
+
+. local k : word count `sectores'
+
+. matrix R = J(`k', 3, .)
+
+. local i = 1
+
+. foreach s of local sectores {
+  2.     quietly regress ingreso educ if sector == "`s'"
+  3.     matrix R[`i', 1] = _b[educ]
+  4.     matrix R[`i', 2] = _se[educ]
+  5.     matrix R[`i', 3] = e(N)
+  6.     local i = `i' + 1
+  7. }
+
+. 
+. matrix colnames R = beta_educ ee n
+
+. matrix rownames R = `sectores'
+
+. matrix list R, format(%9.0f)
+
+R[6,3]
+               beta_educ         ee          n
+  Agricultura      37519       7556         13
+     Comercio      24487       8529          6
+ Construcción      23783      14122          5
+    Educación      37368      12642          7
+    Industria      42713      14514          9
+    Servicios      32308       7924         15
+
+. 
+. putexcel set "output/tarea_t5_por_sector.xlsx", replace      
+note: file will be replaced when the first putexcel command is issued.
+
+. putexcel A1 = ("Sector") B1 = ("Beta educ") C1 = ("Error est.") D1 = ("n")
+file output/tarea_t5_por_sector.xlsx saved
+
+. putexcel B2 = matrix(R)
+file output/tarea_t5_por_sector.xlsx saved
+
+. local fila = 2
+
+. foreach s of local sectores {
+  2.     putexcel A`fila' = ("`s'")
+  3.     local fila = `fila' + 1
+  4. }
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+file output/tarea_t5_por_sector.xlsx saved
+
+. putexcel A9 = ("Fuente: $fuente")
+file output/tarea_t5_por_sector.xlsx saved
+
+. 
+. log close
+      name:  <unnamed>
+       log:  C:\Users\rato2\OneDrive\Documentos\Programación\tareas\tarea5-funda
+> mentos\output/tarea_t5.log
+  log type:  text
+ closed on:  15 Nov 2026, 23:28:11
+--------------------------------------------------------------------------------
